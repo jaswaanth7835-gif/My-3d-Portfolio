@@ -33,6 +33,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             __html: `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`,
           }}
         />
+        {/* skip the intro overlay before paint for returning visitors and reduced-motion users */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(sessionStorage.getItem("intro-seen")==="1"||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.setAttribute("data-intro","skip")}catch(e){}})()`,
+          }}
+        />
+        <noscript>
+          <style>{`.intro{display:none}`}</style>
+        </noscript>
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

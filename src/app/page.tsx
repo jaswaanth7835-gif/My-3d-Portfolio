@@ -7,6 +7,7 @@ import Scene3D, { type SceneMode } from "@/components/Scene3D";
 import ContactForm from "@/components/ContactForm";
 import TiltCard from "@/components/TiltCard";
 import ThemeToggle from "@/components/ThemeToggle";
+import IntroLoader from "@/components/IntroLoader";
 import { profile, projects, skills } from "@/data/portfolio";
 
 const fadeUp = {
@@ -50,6 +51,7 @@ export default function Home() {
   const [mode, setMode] = useState<SceneMode>("waves");
   return (
     <>
+      <IntroLoader />
       <Scene3D mode={mode} />
 
       <header className="fixed inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/5 bg-black/70 px-5 py-4 text-xs sm:px-10 sm:text-sm">

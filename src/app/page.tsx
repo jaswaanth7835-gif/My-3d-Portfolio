@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Scene3D, { type SceneMode } from "@/components/Scene3D";
 import ContactForm from "@/components/ContactForm";
 import TiltCard from "@/components/TiltCard";
+import ThemeToggle from "@/components/ThemeToggle";
 import { profile, projects, skills } from "@/data/portfolio";
 
 const fadeUp = {
@@ -23,7 +24,7 @@ const reveal = {
 
 const section = "relative mx-auto max-w-6xl px-5 py-20 sm:px-10 sm:py-28 md:px-16 lg:px-20";
 const h2 = "text-[clamp(2.25rem,6vw,3.75rem)] font-bold leading-[1.05] tracking-tighter";
-const glass = "border border-white/10 bg-white/[0.04]";
+const glass = "surface";
 
 function Divider() {
   return <div className="mx-auto h-px max-w-6xl bg-gradient-to-r from-transparent via-accent/50 to-transparent" />;
@@ -53,6 +54,7 @@ export default function Home() {
 
       <header className="fixed inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/5 bg-black/70 px-5 py-4 text-xs sm:px-10 sm:text-sm">
         <a href="#top" className="font-mono font-semibold text-accent transition-transform hover:scale-110">JN</a>
+        <div className="flex items-center gap-4 sm:gap-6">
         <nav className="flex gap-4 text-zinc-300 sm:gap-5">
           {["about", "projects", "skills", "contact"].map((s) => (
             <a key={s} href={`#${s}`} className="capitalize transition-colors hover:text-accent hover:[text-shadow:0_0_14px_var(--accent)]">
@@ -60,6 +62,8 @@ export default function Home() {
             </a>
           ))}
         </nav>
+        <ThemeToggle />
+        </div>
       </header>
 
       <main id="top" className="relative z-10 font-sans">
@@ -190,7 +194,7 @@ export default function Home() {
                   {...reveal}
                   transition={{ ...reveal.transition, delay: (i % 2) * 0.08 }}
                   className={`group group/tilt relative flex flex-col overflow-hidden rounded-3xl p-6 sm:p-8 transition-[border-color,box-shadow,background-color] duration-300 hover:border-accent/50 hover:shadow-[0_20px_50px_-20px_var(--accent)] ${glass} ${
-                    featured ? "sm:col-span-2 border-accent/40 bg-accent/[0.06]" : p.images ? "sm:col-span-2" : ""
+                    featured ? "featured sm:col-span-2" : p.images ? "sm:col-span-2" : ""
                   }`}
                 >
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -261,7 +265,7 @@ export default function Home() {
                 <h3 className="font-mono text-xs uppercase tracking-widest text-accent">{group}</h3>
                 <ul className="mt-4 flex flex-wrap gap-2">
                   {items.map((s) => (
-                    <li key={s} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-zinc-200 transition-all hover:-translate-y-0.5 hover:border-accent hover:bg-accent/15 hover:text-accent">
+                    <li key={s} className="chip rounded-full px-3 py-1.5 text-sm text-zinc-200 transition-all hover:-translate-y-0.5 hover:border-accent hover:bg-accent/15 hover:text-accent">
                       {s}
                     </li>
                   ))}
@@ -281,7 +285,7 @@ export default function Home() {
             <div className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.07]"
-              style={{ backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize: "48px 48px" }}
+              style={{ backgroundImage: "linear-gradient(var(--foreground) 1px,transparent 1px),linear-gradient(90deg,var(--foreground) 1px,transparent 1px)", backgroundSize: "48px 48px" }}
             />
             <div className="relative grid gap-12 lg:grid-cols-[1fr_1.1fr]">
               <div>
@@ -310,14 +314,14 @@ export default function Home() {
                       target={dl ? undefined : "_blank"}
                       rel="noreferrer"
                       {...(dl ? { download: true } : {})}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent"
+                      className="chip rounded-xl px-3 py-3 transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent"
                     >
                       {label as string} ↗
                     </a>
                   ))}
                 </div>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-black/40 p-5 shadow-[0_0_60px_-20px_var(--accent)] sm:p-8">
+              <div className="surface-strong rounded-3xl p-5 shadow-[0_0_60px_-20px_var(--accent)] sm:p-8">
                 <div className="font-mono text-xs uppercase tracking-[0.25em] text-accent">{"// Send a message"}</div>
                 <ContactForm />
               </div>

@@ -19,6 +19,27 @@ html {
   color-scheme: dark;
 }
 
+/* Light mode: invert the neutral tokens the whole UI is built from, so every
+   text-zinc-*, bg-white/*, border-white/* and bg-black/* utility adapts at once. */
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f7f8f9;
+  --foreground: #16181d;
+  --accent: #0f766e;
+  --color-white: #000;
+  --color-black: #fff;
+  --color-zinc-50: oklch(14.1% 0.005 285.823);
+  --color-zinc-100: oklch(21% 0.006 285.885);
+  --color-zinc-200: oklch(27.4% 0.006 286.033);
+  --color-zinc-300: oklch(37% 0.013 285.805);
+  --color-zinc-400: oklch(44.2% 0.017 285.786);
+  --color-zinc-600: oklch(70.5% 0.015 286.067);
+  --color-zinc-700: oklch(87.1% 0.006 286.286);
+  --color-zinc-800: oklch(92% 0.004 286.32);
+  --color-zinc-900: oklch(96.7% 0.001 286.375);
+  --color-zinc-950: oklch(98.5% 0 none);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -32,19 +53,42 @@ body {
 }
 
 
+/* Surfaces: translucent glass on dark; solid, shadowed panels on light so the
+   wave field never shows through text. In the components layer so hover/state
+   utilities still override them. */
+@layer components {
+  .surface {
+    border-width: 1px;
+    border-color: rgb(255 255 255 / 0.1);
+    background-color: rgb(255 255 255 / 0.04);
+  }
+  .surface-strong {
+    border-width: 1px;
+    border-color: rgb(255 255 255 / 0.1);
+    background-color: rgb(0 0 0 / 0.4);
+  }
+  .chip {
+    border-width: 1px;
+    border-color: rgb(255 255 255 / 0.1);
+    background-color: rgb(255 255 255 / 0.05);
+  }
+  .featured {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background-color: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
 
-.headline-glow {
-  background: linear-gradient(100deg, #2dd4bf 0%, #5b8def 50%, #2dd4bf 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shine 6s linear infinite;
+  [data-theme="light"] .surface,
+  [data-theme="light"] .surface-strong {
+    border-color: rgb(15 23 42 / 0.1);
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -14px rgb(15 23 42 / 0.18);
+  }
+  [data-theme="light"] .chip {
+    border-color: rgb(15 23 42 / 0.1);
+    background-color: #f1f4f6;
+  }
+  [data-theme="light"] .featured {
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    background-color: color-mix(in srgb, var(--accent) 5%, #fff);
+  }
 }
-@keyframes shine {
-  to { background-position: 200% center; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .headline-glow { animation: none; }
-}
-

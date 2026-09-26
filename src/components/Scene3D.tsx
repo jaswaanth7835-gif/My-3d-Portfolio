@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
+import { useTheme } from "@/components/ThemeToggle";
 
 const state = { scroll: 0, x: 0, y: 0 };
 
@@ -87,6 +88,7 @@ const vertex = /* glsl */ `
   uniform float uTime;
   uniform float uScroll;
   uniform vec2 uMouse;
+  uniform float uLight;
   varying vec3 vColor;
   varying float vAlpha;
 
@@ -108,7 +110,8 @@ const vertex = /* glsl */ `
     vec3 blue = vec3(0.357, 0.553, 0.937);
     vec3 violet = vec3(0.55, 0.45, 0.95);
     vColor = mix(mix(teal, blue, k), violet, smoothstep(0.75, 1.0, k) * 0.6);
-    vColor += smoothstep(0.85, 1.0, k) * 0.35;
+    // dark: brighten crests (additive glow); light: deepen colours so dots read on a pale page
+    vColor = mix(vColor + smoothstep(0.85, 1.0, k) * 0.35, vColor * 0.28, uLight);
 
     float depth = -mv.z;
     vAlpha = smoothstep(70.0, 8.0, depth) * smoothstep(0.5, 3.0, depth);
@@ -118,6 +121,7 @@ const vertex = /* glsl */ `
 
 const fragment = /* glsl */ `
   varying vec3 vColor;
+  uniform float uLight;
   varying float vAlpha;
   void main() {
     float d = length(gl_PointCoord - 0.5);
@@ -130,7 +134,7 @@ const fragment = /* glsl */ `
 const COLS = 260;
 const ROWS = 200;
 
-function Waves() {
+function Waves({ light }: { light: boolean }) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const geometry = useMemo(() => {
     const pos = new Float32Array(COLS * ROWS * 3);
@@ -146,7 +150,7 @@ function Waves() {
     return g;
   }, []);
   const uniforms = useMemo(
-    () => ({ uTime: { value: 0 }, uScroll: { value: 0 }, uMouse: { value: new THREE.Vector2() } }),
+    () => ({ uTime: { value: 0 }, uScroll: { value: 0 }, uMouse: { value: new THREE.Vector2() }, uLight: { value: 0 } }),
     []
   );
   const smooth = useRef(0);
@@ -159,6 +163,7 @@ function Waves() {
     m.uniforms.uTime.value = clock.elapsedTime;
     m.uniforms.uScroll.value = s;
     m.uniforms.uMouse.value.set(state.x, state.y);
+    m.uniforms.uLight.value = light ? 1 : 0;
 
     // fly forward over the field as the page scrolls
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, state.x * 1.5, 0.05);
@@ -176,7 +181,7 @@ function Waves() {
         uniforms={uniforms}
         transparent
         depthWrite={false}
-        blending={THREE.AdditiveBlending}
+        blending={light ? THREE.NormalBlending : THREE.AdditiveBlending}
       />
     </points>
   );
@@ -185,12 +190,14 @@ function Waves() {
 export type SceneMode = "waves" | "knot";
 
 export default function Scene3D({ mode }: { mode: SceneMode }) {
+  const light = useTheme() === "light";
   const wrap = useRef<HTMLDivElement>(null);
   useInput();
 
   useEffect(() => {
-    const top = mode === "waves" ? 0.75 : 1;
-    const floor = 0.45;
+    const top = mode === "waves" ? (light ? 1 : 0.75) : 1;
+    // light pages show every stray dot, so the field recedes much further behind content
+    const floor = light ? 0.28 : 0.45;
     const fade = () => {
       if (wrap.current)
         wrap.current.style.opacity = String(top - (top - floor) * Math.min(1, window.scrollY / window.innerHeight));
@@ -198,13 +205,13 @@ export default function Scene3D({ mode }: { mode: SceneMode }) {
     fade();
     window.addEventListener("scroll", fade, { passive: true });
     return () => window.removeEventListener("scroll", fade);
-  }, [mode]);
+  }, [mode, light]);
 
   return (
     <div ref={wrap} className="fixed inset-0 -z-10 pointer-events-none">
       <Canvas key={mode} camera={{ position: [0, 3.2, 9], fov: 55 }} dpr={[1, 2]}>
         {mode === "waves" ? (
-          <Waves />
+          <Waves light={light} />
         ) : (
           <>
             <ambientLight intensity={0.4} />
@@ -217,7 +224,10 @@ export default function Scene3D({ mode }: { mode: SceneMode }) {
         )}
       </Canvas>
       {mode !== "knot" && (
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_50%_at_30%_45%,rgba(10,10,10,0.8),transparent_75%)]" />
+        <div
+          className="absolute inset-0"
+          style={{ background: "radial-gradient(ellipse 55% 50% at 30% 45%, color-mix(in srgb, var(--background) 80%, transparent), transparent 75%)" }}
+        />
       )}
     </div>
   );

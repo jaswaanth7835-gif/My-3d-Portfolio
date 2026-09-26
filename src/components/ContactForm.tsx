@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const field =
-  "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base outline-none transition-colors placeholder:text-zinc-500 hover:border-accent/50 hover:bg-white/[0.08] focus:border-accent focus:bg-white/[0.08] focus:shadow-[0_0_0_3px_rgba(45,212,191,0.15)]";
+  "chip w-full rounded-xl px-4 py-3.5 text-base outline-none transition-colors placeholder:text-zinc-500 hover:border-accent/50 focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)]";
 
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");

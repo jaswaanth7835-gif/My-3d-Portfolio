@@ -1,4 +1,5 @@
 import { profile } from "@/data/portfolio";
+import { contactEmailHtml } from "./email";
 
 export async function POST(request: Request) {
   const { name, email, message, website } = await request.json().catch(() => ({}));
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
     typeof message !== "string" ||
     !name.trim() ||
     !/^\S+@\S+\.\S+$/.test(email) ||
+    email.length > 254 ||
     message.trim().length < 5 ||
     name.length > 100 ||
     message.length > 5000
@@ -31,7 +33,8 @@ export async function POST(request: Request) {
       from: "Portfolio <onboarding@resend.dev>",
       to: [process.env.CONTACT_TO_EMAIL ?? profile.email],
       reply_to: email,
-      subject: `Portfolio message from ${name}`,
+      subject: `New message from ${name.replace(/\s+/g, " ").trim()} · Portfolio`,
+      html: contactEmailHtml({ name: name.trim(), email, message: message.trim() }),
       text: `From: ${name} <${email}>\n\n${message}`,
     }),
   });

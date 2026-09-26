@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { profile } from "@/data/portfolio";
 
-type Phase = "closed" | "peek" | "open" | "fade" | "done";
+type Phase = "closed" | "peek" | "open" | "shrink" | "close" | "fade" | "done";
 
 const KEY = "intro-seen";
 
@@ -25,8 +25,9 @@ function faceOnScreen() {
   return { x: (x / vw) * 100, y: (y / vh) * 100 };
 }
 
-// Aperture intro: the photo appears through a small circle with the name, the circle
-// widens to fill the screen, then the overlay fades to reveal the site. Once per session.
+// Aperture intro: the photo appears through a small circle with the name and widens to fill
+// the screen, then reverses: the circle shrinks back onto the face with the site showing
+// around it, and closes. Once per session.
 export default function IntroLoader() {
   const [phase, setPhase] = useState<Phase>("closed");
   const [face, setFace] = useState({ x: 50, y: 46 });
@@ -48,11 +49,12 @@ export default function IntroLoader() {
         setFace(faceOnScreen());
         setPhase("peek");
       }, 120),
-      setTimeout(() => setPhase("open"), 1800),
-      setTimeout(() => setPhase("fade"), 3000),
-      setTimeout(() => setPhase("done"), 3600),
+      setTimeout(() => setPhase("open"), 1700),
+      setTimeout(() => setPhase("shrink"), 3000),
+      setTimeout(() => setPhase("close"), 4300),
+      setTimeout(() => setPhase("done"), 5000),
     ];
-    const skip = () => setPhase((p) => (p === "done" ? p : "fade"));
+    const skip = () => setPhase((p) => (p === "done" || p === "shrink" || p === "close" ? p : "fade"));
     const resize = () => setFace(faceOnScreen());
     window.addEventListener("keydown", skip);
     window.addEventListener("resize", resize);
@@ -65,11 +67,13 @@ export default function IntroLoader() {
   }, []);
 
   useEffect(() => {
-    if (phase === "fade") {
+    if (phase === "shrink" || phase === "fade") {
       try {
         sessionStorage.setItem(KEY, "1");
       } catch {}
       document.documentElement.style.overflow = "";
+    }
+    if (phase === "fade") {
       const t = setTimeout(() => setPhase("done"), 600);
       return () => clearTimeout(t);
     }
@@ -77,21 +81,27 @@ export default function IntroLoader() {
 
   if (phase === "done") return null;
 
-  const circle = phase === "closed" ? "0%" : phase === "peek" ? "17%" : "80%";
+  const circle = { closed: "0%", peek: "17%", open: "80%", shrink: "17%", close: "0%", fade: "80%" }[phase];
   // while the circle is small, slide the photo so the face sits in the centre; it glides back as it opens
-  const centred = phase === "closed" || phase === "peek";
+  const centred = phase !== "open" && phase !== "fade";
+  // on the way out the backdrop goes clear so the site appears around the shrinking circle
+  const exiting = phase === "shrink" || phase === "close";
   const shift = centred ? `translate(${50 - face.x}vw, ${46 - face.y}vh)` : "translate(0, 0)";
 
   return (
     <div
-      className="intro fixed inset-0 z-[100] cursor-pointer bg-background transition-opacity duration-500"
-      style={{ opacity: phase === "fade" ? 0 : 1 }}
+      className="intro fixed inset-0 z-[100] cursor-pointer transition-[opacity,background-color] duration-500"
+      style={{
+        opacity: phase === "fade" ? 0 : 1,
+        backgroundColor: exiting ? "transparent" : "var(--background)",
+        pointerEvents: exiting ? "none" : "auto",
+      }}
       onClick={() => setPhase("fade")}
       aria-hidden
     >
       <div
-        className="absolute inset-0 transition-[clip-path] duration-[1200ms] ease-[cubic-bezier(.7,0,.2,1)]"
-        style={{ clipPath: `circle(${circle} at 50% 46%)` }}
+        className="absolute inset-0 transition-[clip-path] ease-[cubic-bezier(.7,0,.2,1)]"
+        style={{ clipPath: `circle(${circle} at 50% 46%)`, transitionDuration: phase === "close" ? "650ms" : "1200ms" }}
       >
         <div
           className="absolute inset-0 transition-transform duration-[1200ms] ease-[cubic-bezier(.7,0,.2,1)]"
@@ -113,7 +123,10 @@ export default function IntroLoader() {
       >
         {profile.name}
       </div>
-      <div className="absolute bottom-6 right-6 font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-500">
+      <div
+        className="absolute bottom-6 right-6 font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-500 transition-opacity"
+        style={{ opacity: exiting ? 0 : 1 }}
+      >
         Click to skip
       </div>
     </div>

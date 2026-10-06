@@ -9,6 +9,7 @@ import ContactForm from "@/components/ContactForm";
 import TiltCard from "@/components/TiltCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import IntroLoader from "@/components/IntroLoader";
+import Terminal from "@/components/Terminal";
 import { labs, profile, projects, roadmap, skills } from "@/data/portfolio";
 
 // three.js is heavy and can't render on the server anyway: load it after the page is interactive
@@ -45,6 +46,70 @@ function Eyebrow({ n, label }: { n: string; label: string }) {
       <span>{n}</span>
       <span className="h-px w-10 bg-accent/60" />
       <span className="uppercase tracking-[0.25em]">{label}</span>
+    </div>
+  );
+}
+
+const ROLES = [
+  "Aspiring SOC Analyst",
+  "Cybersecurity undergraduate",
+  `${labs.length}/${labs.length} DC-series boxes completed`,
+  "Open to internships",
+];
+
+// Types each role out, holds, deletes, moves on. Static first role for reduced motion and SSR.
+function TypedRoles() {
+  const [text, setText] = useState(ROLES[0]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let role = 0;
+    let len = ROLES[0].length;
+    let deleting = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const full = ROLES[role];
+      if (deleting) {
+        len--;
+        if (len === 0) {
+          deleting = false;
+          role = (role + 1) % ROLES.length;
+        }
+      } else {
+        len++;
+        if (len === ROLES[role].length) deleting = true;
+      }
+      setText(ROLES[role].slice(0, len));
+      const atEnd = !deleting ? false : len === full.length;
+      timer = setTimeout(tick, atEnd ? 1800 : deleting ? 28 : 55);
+    };
+    timer = setTimeout(tick, 2200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <p className="font-mono text-sm text-accent sm:text-base" aria-label={ROLES.join(", ")}>
+      <span className="text-zinc-500">&gt;</span> <span aria-hidden>{text}</span>
+      <span aria-hidden className="ml-0.5 inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] animate-pulse bg-accent" />
+    </p>
+  );
+}
+
+const TOOLS = Object.values(skills).flat();
+
+function Ticker() {
+  return (
+    <div className="relative overflow-hidden border-y border-white/5 bg-background py-4" aria-hidden>
+      <div className="ticker flex w-max gap-10 whitespace-nowrap font-mono text-sm uppercase tracking-[0.25em] text-zinc-500">
+        {[...TOOLS, ...TOOLS].map((t, i) => (
+          <span key={i} className="flex items-center gap-10">
+            {t}
+            <span className="text-accent">/</span>
+          </span>
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent" />
     </div>
   );
 }
@@ -100,7 +165,7 @@ export default function Home() {
       <IntroLoader />
       <Scene3D mode={mode} />
 
-      <header className="fixed inset-x-0 top-0 z-20 border-b border-white/5 bg-black/70">
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-white/5 bg-background/95">
         <div className="flex items-center justify-between px-4 py-4 text-[11px] sm:px-10 sm:text-sm">
           <a href="#top" aria-label="Back to top" className="font-mono font-semibold text-accent transition-transform hover:scale-110">
             JN
@@ -125,7 +190,10 @@ export default function Home() {
                 </a>
               ))}
             </nav>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <Terminal />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
         <div ref={progress} aria-hidden className="h-px origin-left scale-x-0 bg-gradient-to-r from-accent to-blue-400" />
@@ -188,7 +256,8 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
               className="mt-8 max-w-xl"
             >
-              <p className="text-lg text-zinc-400 sm:text-xl">
+              <TypedRoles />
+              <p className="mt-4 text-lg text-zinc-400 sm:text-xl">
                 A cybersecurity undergraduate working toward a SOC Analyst role.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -210,7 +279,7 @@ export default function Home() {
           </a>
         </section>
 
-        <Divider />
+        <Ticker />
         <section id="about" className={section}>
           <motion.div {...reveal}>
             <Eyebrow n="01" label="About" />
@@ -361,17 +430,28 @@ export default function Home() {
               <span className="text-zinc-400">
                 <span className="text-accent">$</span> ./progress --series dc
               </span>
-              <div className="flex min-w-40 flex-1 items-center gap-3">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    whileInView={{ scaleX: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
-                    className="h-full origin-left rounded-full bg-gradient-to-r from-accent to-blue-400"
-                  />
+              <div className="flex min-w-48 flex-1 items-center gap-3">
+                <div
+                  className="flex flex-1 gap-1"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={labs.length}
+                  aria-valuenow={labs.length}
+                  aria-label="DC series progress"
+                >
+                  {labs.map((lab, i) => (
+                    <motion.span
+                      key={lab.name}
+                      title={lab.name}
+                      initial={{ opacity: 0.15 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.25, delay: 0.3 + i * 0.12 }}
+                      className="h-3 flex-1 rounded-sm bg-gradient-to-r from-accent to-blue-400 shadow-[0_0_12px_-2px_var(--accent)]"
+                    />
+                  ))}
                 </div>
-                <span className="whitespace-nowrap text-accent">
+                <span className="whitespace-nowrap font-semibold text-accent">
                   {labs.length}/{labs.length} complete
                 </span>
               </div>
@@ -442,7 +522,7 @@ export default function Home() {
         <section id="contact" className={`${section} pb-32`}>
           <motion.div
             {...reveal}
-            className="relative overflow-hidden rounded-[2rem] border border-accent/30 bg-gradient-to-br from-accent/15 via-white/[0.03] to-blue-500/10 p-5 sm:p-10 lg:p-14"
+            className="relative overflow-hidden rounded-[2rem] border border-accent/30 bg-background bg-gradient-to-br from-accent/15 via-white/[0.03] to-blue-500/10 p-5 sm:p-10 lg:p-14"
           >
             <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
@@ -489,7 +569,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-white/5 bg-black/60">
+      <footer className="relative z-10 border-t border-white/5 bg-background">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:grid-cols-[1.4fr_1fr_1fr] sm:px-10 md:px-16 lg:px-20">
           <div>
             <div className="font-mono text-lg font-semibold text-accent">JN</div>

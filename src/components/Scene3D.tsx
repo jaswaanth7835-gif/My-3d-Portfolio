@@ -197,7 +197,7 @@ export default function Scene3D({ mode }: { mode: SceneMode }) {
   useEffect(() => {
     const top = mode === "waves" ? (light ? 1 : 0.75) : 1;
     // light pages show every stray dot, so the field recedes much further behind content
-    const floor = light ? 0.28 : 0.45;
+    const floor = light ? 0.28 : 0.3;
     const fade = () => {
       if (wrap.current)
         wrap.current.style.opacity = String(top - (top - floor) * Math.min(1, window.scrollY / window.innerHeight));

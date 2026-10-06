@@ -40,6 +40,13 @@ html {
   --color-zinc-950: oklch(98.5% 0 none);
 }
 
+/* visible keyboard focus everywhere, without showing rings on mouse clicks */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 [data-intro="skip"] .intro {
   display: none;
 }

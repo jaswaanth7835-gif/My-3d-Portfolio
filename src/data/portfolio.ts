@@ -1,3 +1,5 @@
+export const site = "https://my-3d-portfolio-nu-sage.vercel.app";
+
 export const profile = {
   name: "Jaswaanth Narayanasamy",
   title: "Cybersecurity Undergraduate · Aspiring SOC Analyst",
@@ -67,8 +69,8 @@ export const projects: Project[] = [
     title: "Home Security Lab",
     meta: "Personal · Ongoing",
     description:
-      "Personal pentesting lab for practising attacks and defences safely.",
-    tech: ["Kali Linux", "VMware", "Metasploit", "Metasploitable 2", "DC-1"],
+      "Personal pentesting lab for practising attacks and defences safely. Home of the full DC-1 to DC-9 series.",
+    tech: ["Kali Linux", "VMware", "Metasploit", "Metasploitable 2", "DC-1 to DC-9"],
   },
 ];
 
@@ -80,3 +82,23 @@ export const skills: Record<string, string[]> = {
   "Cloud & DevOps": ["AWS", "Railway", "Git/GitHub", "Linux"],
   Tools: ["VS Code", "draw.io"],
 };
+
+export type Lab = { name: string; focus: string; tags: string[] };
+
+// VulnHub DC series. `focus` describes each box's well-known attack path.
+export const labs: Lab[] = [
+  { name: "DC-1", focus: "Drupal 7 remote code execution, then SUID privilege escalation.", tags: ["Drupal", "Metasploit", "SUID"] },
+  { name: "DC-2", focus: "WordPress user enumeration and custom wordlists, restricted-shell escape.", tags: ["WordPress", "WPScan", "rbash"] },
+  { name: "DC-3", focus: "Joomla SQL injection, hash cracking and a kernel exploit to root.", tags: ["Joomla", "SQLi", "Kernel exploit"] },
+  { name: "DC-4", focus: "Login brute force, command injection and a sudo misconfiguration.", tags: ["Hydra", "Command injection", "sudo"] },
+  { name: "DC-5", focus: "Local file inclusion with log poisoning, then a vulnerable SUID binary.", tags: ["LFI", "Log poisoning", "SUID"] },
+  { name: "DC-6", focus: "WordPress plugin RCE, lateral movement between users, sudo abuse.", tags: ["WordPress", "Plugin RCE", "nmap"] },
+  { name: "DC-7", focus: "OSINT for leaked credentials, Drupal admin access and a writable cron job.", tags: ["OSINT", "Drush", "Cron"] },
+  { name: "DC-8", focus: "Drupal SQL injection, password cracking and an Exim privilege escalation.", tags: ["SQLi", "John the Ripper", "Exim"] },
+  { name: "DC-9", focus: "SQL injection, file inclusion, port knocking and SSH brute force.", tags: ["SQLi", "Port knocking", "Hydra"] },
+];
+
+export const roadmap = [
+  { label: "TryHackMe SOC Level 1 path", status: "In progress", target: "Dec 2026" },
+  { label: "CompTIA Security+", status: "Planned", target: "Jun 2027" },
+];

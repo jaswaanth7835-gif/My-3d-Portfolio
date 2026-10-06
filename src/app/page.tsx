@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import Scene3D, { type SceneMode } from "@/components/Scene3D";
+import { motion, MotionConfig } from "framer-motion";
+import type { SceneMode } from "@/components/Scene3D";
 import ContactForm from "@/components/ContactForm";
 import TiltCard from "@/components/TiltCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import IntroLoader from "@/components/IntroLoader";
-import { profile, projects, skills } from "@/data/portfolio";
+import { labs, profile, projects, roadmap, skills } from "@/data/portfolio";
+
+// three.js is heavy and can't render on the server anyway: load it after the page is interactive
+const Scene3D = dynamic(() => import("@/components/Scene3D"), { ssr: false });
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -23,9 +27,13 @@ const reveal = {
   transition: { duration: 0.6, ease: "easeOut" },
 } as const;
 
-const section = "relative mx-auto max-w-6xl px-5 py-20 sm:px-10 sm:py-28 md:px-16 lg:px-20";
+const section = "relative mx-auto max-w-6xl scroll-mt-16 px-5 py-20 sm:px-10 sm:py-28 md:px-16 lg:px-20";
 const h2 = "text-[clamp(2.25rem,6vw,3.75rem)] font-bold leading-[1.05] tracking-tighter";
 const glass = "surface";
+const card =
+  "group/tilt relative rounded-3xl transition-[border-color,box-shadow,background-color] duration-300 hover:border-accent/50 hover:shadow-[0_20px_50px_-22px_var(--accent)]";
+
+const NAV = ["about", "projects", "labs", "skills", "contact"] as const;
 
 function Divider() {
   return <div className="mx-auto h-px max-w-6xl bg-gradient-to-r from-transparent via-accent/50 to-transparent" />;
@@ -44,40 +52,96 @@ function Eyebrow({ n, label }: { n: string; label: string }) {
 const facts = [
   ["Level 5", "BSc (Hons) Cyber Security"],
   ["2028", "Expected graduation"],
+  [`${labs.length} / ${labs.length}`, "DC-series boxes completed"],
   ["SOC", "Target role"],
+];
+
+const socials: [string, string, boolean][] = [
+  ["GitHub", profile.github, false],
+  ["LinkedIn", profile.linkedin, false],
+  ["Resume", profile.resume, true],
 ];
 
 export default function Home() {
   const [mode, setMode] = useState<SceneMode>("waves");
+  const [active, setActive] = useState("");
+  const progress = useRef<HTMLDivElement>(null);
+
+  // scroll progress bar + which section the nav should highlight
+  useEffect(() => {
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (progress.current) progress.current.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+      let current = "";
+      for (const id of NAV) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.4) current = id;
+      }
+      setActive(current);
+    };
+    const raf = requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
   return (
-    <>
+    <MotionConfig reducedMotion="user">
+      <a
+        href="#about"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-full focus:bg-accent focus:px-5 focus:py-2 focus:font-semibold focus:text-black"
+      >
+        Skip to content
+      </a>
       <IntroLoader />
       <Scene3D mode={mode} />
 
-      <header className="fixed inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/5 bg-black/70 px-5 py-4 text-xs sm:px-10 sm:text-sm">
-        <a href="#top" className="font-mono font-semibold text-accent transition-transform hover:scale-110">JN</a>
-        <div className="flex items-center gap-4 sm:gap-6">
-        <nav className="flex gap-4 text-zinc-300 sm:gap-5">
-          {["about", "projects", "skills", "contact"].map((s) => (
-            <a key={s} href={`#${s}`} className="capitalize transition-colors hover:text-accent hover:[text-shadow:0_0_14px_var(--accent)]">
-              {s}
-            </a>
-          ))}
-        </nav>
-        <ThemeToggle />
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-white/5 bg-black/70">
+        <div className="flex items-center justify-between px-4 py-4 text-[11px] sm:px-10 sm:text-sm">
+          <a href="#top" aria-label="Back to top" className="font-mono font-semibold text-accent transition-transform hover:scale-110">
+            JN
+          </a>
+          <div className="flex items-center gap-3 sm:gap-6">
+            <nav aria-label="Sections" className="flex gap-3 text-zinc-300 sm:gap-5">
+              {NAV.map((s) => (
+                <a
+                  key={s}
+                  href={`#${s}`}
+                  aria-current={active === s ? "true" : undefined}
+                  className={`relative capitalize transition-colors hover:text-accent hover:[text-shadow:0_0_14px_var(--accent)] ${
+                    active === s ? "text-accent" : ""
+                  }`}
+                >
+                  {s}
+                  <span
+                    className={`absolute -bottom-1.5 left-0 h-px w-full origin-left bg-accent transition-transform duration-300 ${
+                      active === s ? "scale-x-100" : "scale-x-0"
+                    }`}
+                  />
+                </a>
+              ))}
+            </nav>
+            <ThemeToggle />
+          </div>
         </div>
+        <div ref={progress} aria-hidden className="h-px origin-left scale-x-0 bg-gradient-to-r from-accent to-blue-400" />
       </header>
 
       <main id="top" className="relative z-10 font-sans">
         <section className="relative flex min-h-[100svh] flex-col justify-center px-5 pb-28 pt-28 sm:px-10 md:px-16 lg:px-20">
           <div className="mb-10 flex flex-wrap items-center justify-between gap-4 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500 sm:text-[11px]">
-            <div className="text-accent">EXP 00 // Cybersecurity · SOC · Sri Lanka</div>
-            <div className="flex items-center gap-2">
+            <div className="text-accent">EXP 00 {"//"} Cybersecurity · SOC · Sri Lanka</div>
+            <div className="flex items-center gap-2" role="group" aria-label="3D background">
               <span className="hidden sm:inline">Field:</span>
               {(["waves", "knot"] as const).map((l, n) => (
                 <button
                   key={l}
                   onClick={() => setMode(l)}
+                  aria-pressed={mode === l}
                   className={`rounded-full border px-3 py-1.5 capitalize transition-colors ${
                     mode === l ? "border-accent bg-accent/15 text-accent" : "border-white/15 hover:border-accent/60"
                   }`}
@@ -152,19 +216,35 @@ export default function Home() {
             <Eyebrow n="01" label="About" />
             <div className="grid items-center gap-12 md:grid-cols-[1fr_400px]">
               <div>
-              <h2 className={h2}>Investigating what happened, and why.</h2>
-              <p className="mt-8 max-w-2xl text-lg leading-relaxed text-zinc-400">{profile.bio}</p>
-              <div className="mt-10 grid gap-3 sm:grid-cols-3">
-                {facts.map(([big, small]) => (
-                  <div key={big} className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/10 hover:shadow-[0_15px_40px_-20px_var(--accent)] ${glass}`}>
-                    <div className="text-3xl font-bold text-accent">{big}</div>
-                    <div className="mt-1 text-sm text-zinc-400">{small}</div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-6 text-sm text-zinc-500">
-                APIIT Sri Lanka × University of Staffordshire · {profile.location}
-              </p>
+                <h2 className={h2}>Investigating what happened, and why.</h2>
+                <p className="mt-8 max-w-2xl text-lg leading-relaxed text-zinc-400">{profile.bio}</p>
+                <div className="mt-10 grid grid-cols-2 gap-3">
+                  {facts.map(([big, small]) => (
+                    <div key={small} className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/10 hover:shadow-[0_15px_40px_-20px_var(--accent)] ${glass}`}>
+                      <div className="text-3xl font-bold text-accent">{big}</div>
+                      <div className="mt-1 text-sm text-zinc-400">{small}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8">
+                  <div className="font-mono text-xs uppercase tracking-[0.25em] text-zinc-500">Currently working toward</div>
+                  <ul className="mt-3 grid gap-2">
+                    {roadmap.map((r) => (
+                      <li key={r.label} className="chip flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-4 py-3 text-sm transition-colors hover:border-accent/50">
+                        <span className={`h-2 w-2 rounded-full ${r.status === "In progress" ? "animate-pulse bg-accent" : "bg-zinc-500"}`} />
+                        <span className="font-medium text-zinc-200">{r.label}</span>
+                        <span className="ml-auto font-mono text-xs text-zinc-500">
+                          {r.status} · {r.target}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="mt-6 text-sm text-zinc-500">
+                  APIIT Sri Lanka × University of Staffordshire · {profile.location}
+                </p>
               </div>
               <div className="relative">
                 <div className="absolute -inset-3 rounded-[2rem] bg-gradient-to-br from-accent/40 to-transparent blur-2xl" />
@@ -173,8 +253,8 @@ export default function Home() {
                   alt={`Portrait of ${profile.name}`}
                   width={640}
                   height={853}
-                  priority
-                  className="relative mx-auto aspect-[3/4] w-full max-w-xs rounded-3xl md:max-w-sm border border-accent/30 object-cover"
+                  sizes="(min-width: 768px) 400px, 320px"
+                  className="relative mx-auto aspect-[3/4] w-full max-w-xs rounded-3xl border border-accent/30 object-cover md:max-w-sm"
                 />
               </div>
             </div>
@@ -195,7 +275,7 @@ export default function Home() {
                   key={p.title}
                   {...reveal}
                   transition={{ ...reveal.transition, delay: (i % 2) * 0.08 }}
-                  className={`group group/tilt relative flex flex-col overflow-hidden rounded-3xl p-6 sm:p-8 transition-[border-color,box-shadow,background-color] duration-300 hover:border-accent/50 hover:shadow-[0_20px_50px_-20px_var(--accent)] ${glass} ${
+                  className={`group flex flex-col overflow-hidden p-6 sm:p-8 ${card} ${glass} ${
                     featured ? "featured sm:col-span-2" : p.images ? "sm:col-span-2" : ""
                   }`}
                 >
@@ -218,7 +298,14 @@ export default function Home() {
                             <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
                             <span className="ml-3 font-mono text-[11px] text-zinc-500">Power BI · page {k + 1} · click to enlarge</span>
                           </div>
-                          <Image src={src} alt={`${p.title} dashboard page ${k + 1}`} width={1429} height={803} className="aspect-[16/9] w-full object-contain transition-transform duration-500 group-hover/img:scale-[1.02]" />
+                          <Image
+                            src={src}
+                            alt={`${p.title} dashboard page ${k + 1}`}
+                            width={1429}
+                            height={803}
+                            sizes="(min-width: 1024px) 480px, 100vw"
+                            className="aspect-[16/9] w-full object-contain transition-transform duration-500 group-hover/img:scale-[1.02]"
+                          />
                         </a>
                       ))}
                     </div>
@@ -251,9 +338,83 @@ export default function Home() {
         </section>
 
         <Divider />
+        <section id="labs" className={section}>
+          <motion.div {...reveal}>
+            <Eyebrow n="03" label="Labs" />
+            <h2 className={h2}>
+              Breaking in, <span className="text-accent">on purpose.</span>
+            </h2>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
+              The full VulnHub DC series, completed in my home lab. Each box is a deliberately vulnerable machine:
+              find a way in, then work up to root.
+            </p>
+          </motion.div>
+
+          <motion.div {...reveal} className={`mt-10 overflow-hidden rounded-2xl font-mono text-sm ${glass}`}>
+            <div className="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+              <span className="ml-3 text-xs text-zinc-500">kali@lab: ~/vulnhub/dc-series</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4">
+              <span className="text-zinc-400">
+                <span className="text-accent">$</span> ./progress --series dc
+              </span>
+              <div className="flex min-w-40 flex-1 items-center gap-3">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
+                    className="h-full origin-left rounded-full bg-gradient-to-r from-accent to-blue-400"
+                  />
+                </div>
+                <span className="whitespace-nowrap text-accent">
+                  {labs.length}/{labs.length} complete
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {labs.map((lab, i) => (
+              <TiltCard
+                key={lab.name}
+                {...reveal}
+                transition={{ ...reveal.transition, delay: (i % 3) * 0.07 }}
+                className={`flex flex-col overflow-hidden p-6 ${card} ${glass}`}
+              >
+                <span aria-hidden className="pointer-events-none absolute -right-2 -top-5 select-none font-mono text-8xl font-bold text-white/[0.04]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-mono text-2xl font-semibold tracking-tight">{lab.name}</h3>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-accent">
+                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                    Completed
+                  </span>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-zinc-400">{lab.focus}</p>
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {lab.tags.map((t) => (
+                    <li key={t} className="rounded-full border border-accent/20 bg-accent/5 px-2.5 py-1 font-mono text-[11px] text-accent">
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </TiltCard>
+            ))}
+          </div>
+        </section>
+
+        <Divider />
         <section id="skills" className={section}>
           <motion.div {...reveal}>
-            <Eyebrow n="03" label="Skills" />
+            <Eyebrow n="04" label="Skills" />
             <h2 className={h2}>What I work with.</h2>
           </motion.div>
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -262,7 +423,7 @@ export default function Home() {
                 key={group}
                 {...reveal}
                 transition={{ ...reveal.transition, delay: (i % 3) * 0.08 }}
-                className={`group/tilt relative rounded-3xl p-6 transition-[border-color,box-shadow] duration-300 hover:border-accent/50 hover:shadow-[0_20px_50px_-25px_var(--accent)] ${glass}`}
+                className={`p-6 ${card} ${glass}`}
               >
                 <h3 className="font-mono text-xs uppercase tracking-widest text-accent">{group}</h3>
                 <ul className="mt-4 flex flex-wrap gap-2">
@@ -291,7 +452,7 @@ export default function Home() {
             />
             <div className="relative grid gap-12 lg:grid-cols-[1fr_1.1fr]">
               <div>
-                <Eyebrow n="04" label="Contact" />
+                <Eyebrow n="05" label="Contact" />
                 <h2 className="text-[clamp(2.75rem,8vw,4.5rem)] font-bold tracking-tighter">
                   Let&apos;s <span className="text-accent">talk.</span>
                 </h2>
@@ -305,20 +466,16 @@ export default function Home() {
                   {profile.email} →
                 </a>
                 <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-                  {[
-                    ["GitHub", profile.github, false],
-                    ["LinkedIn", profile.linkedin, false],
-                    ["Resume", profile.resume, true],
-                  ].map(([label, href, dl]) => (
+                  {socials.map(([label, href, dl]) => (
                     <a
-                      key={label as string}
-                      href={href as string}
+                      key={label}
+                      href={href}
                       target={dl ? undefined : "_blank"}
                       rel="noreferrer"
                       {...(dl ? { download: true } : {})}
                       className="chip rounded-xl px-3 py-3 transition-all hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent"
                     >
-                      {label as string} ↗
+                      {label} ↗
                     </a>
                   ))}
                 </div>
@@ -330,11 +487,67 @@ export default function Home() {
             </div>
           </motion.div>
         </section>
-
-        <footer className="border-t border-white/5 px-6 py-8 text-center font-mono text-sm text-zinc-600 transition-colors hover:text-accent">
-          © {new Date().getFullYear()} {profile.name}
-        </footer>
       </main>
-    </>
+
+      <footer className="relative z-10 border-t border-white/5 bg-black/60">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:grid-cols-[1.4fr_1fr_1fr] sm:px-10 md:px-16 lg:px-20">
+          <div>
+            <div className="font-mono text-lg font-semibold text-accent">JN</div>
+            <p className="mt-3 font-semibold">{profile.name}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              {profile.title}
+              <br />
+              {profile.location}
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <div className="font-mono text-xs uppercase tracking-[0.25em] text-zinc-500">Explore</div>
+            <ul className="mt-4 grid gap-2 text-sm">
+              {NAV.map((s) => (
+                <li key={s}>
+                  <a href={`#${s}`} className="capitalize text-zinc-300 transition-colors hover:text-accent">
+                    {s}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div>
+            <div className="font-mono text-xs uppercase tracking-[0.25em] text-zinc-500">Connect</div>
+            <ul className="mt-4 grid gap-2 text-sm">
+              <li>
+                <a href={`mailto:${profile.email}`} className="text-zinc-300 transition-colors hover:text-accent">
+                  Email
+                </a>
+              </li>
+              {socials.map(([label, href, dl]) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target={dl ? undefined : "_blank"}
+                    rel="noreferrer"
+                    {...(dl ? { download: true } : {})}
+                    className="text-zinc-300 transition-colors hover:text-accent"
+                  >
+                    {label} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-white/5">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 font-mono text-xs text-zinc-500 sm:px-10 md:px-16 lg:px-20">
+            <span>
+              © {new Date().getFullYear()} {profile.name}
+            </span>
+            <span>Built with Next.js, Tailwind CSS and three.js</span>
+            <a href="#top" className="text-accent transition-transform hover:-translate-y-0.5">
+              Back to top ↑
+            </a>
+          </div>
+        </div>
+      </footer>
+    </MotionConfig>
   );
 }

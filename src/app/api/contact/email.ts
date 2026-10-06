@@ -51,7 +51,7 @@ export function contactEmailHtml({ name, email, message }: { name: string; email
     </td></tr>
 
     <tr><td style="padding:24px 36px 0;">
-      <div style="font-family:${MONO};font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${C.accent};">04 &mdash; Contact form</div>
+      <div style="font-family:${MONO};font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${C.accent};">05 &mdash; Contact form</div>
       <h1 style="margin:12px 0 0;font-family:${SANS};font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-1px;color:${C.text};">
         Someone wants to <span style="color:${C.accent};">talk.</span>
       </h1>
